@@ -2,7 +2,7 @@ import ipywidgets as widgets
 from IPython.display import display
 
 class AnalysisGUI:
-    def __init__(self, model) -> None:
+    def __init__(self, model, medications: list, allergies: list) -> None:
         self.model = model
 
         self.gender = widgets.Dropdown(
@@ -10,14 +10,15 @@ class AnalysisGUI:
             description="Gender:",
             layout=widgets.Layout(padding='10px')
         )
+        
         self.medication = widgets.SelectMultiple(
-            options=["Insulin"],
+            options=medications,
             description="Medications:",
             layout=widgets.Layout(padding='10px')
         )
 
         self.allergies = widgets.SelectMultiple(
-            options=["Hay Fever", "Lactose Intolerant"],
+            options=allergies,
             description="Allergies:",
             layout=widgets.Layout(padding='10px')
         )
@@ -26,6 +27,7 @@ class AnalysisGUI:
             description="Predict",
             layout=widgets.Layout(align_self='center')
         )
+        self.predict.on_click(self.on_predict_button_click)
 
         self.body_image = widgets.Image(
             value=open("assets/imgs/body.png", "rb").read(),
@@ -40,7 +42,7 @@ class AnalysisGUI:
         )
 
         bottom_left_box = widgets.VBox([self.predict, self.output], layout=widgets.Layout(padding='10px', flex='1'))
-        left_box = widgets.VBox([self.gender, self.medication, self.allergies, bottom_left_box], height=400)
+        left_box = widgets.VBox([self.gender, self.medication, self.allergies, bottom_left_box])
         right_box = widgets.VBox([self.body_image])
         
         # Main layout
@@ -49,8 +51,9 @@ class AnalysisGUI:
         # Display the layout
         display(main_layout)
     
-    def on_predict_button_click(self) -> None:
-        # Change output box
-        self.output.value = self.model.make_prediction()
+    def on_predict_button_click(self, b) -> None:
+        # Make prediction
+        #self.output.value = self.model.make_prediction([])
 
         # Highlight part of image
+        pass
