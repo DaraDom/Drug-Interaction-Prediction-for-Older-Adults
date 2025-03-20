@@ -54,3 +54,7 @@ class Model:
             criterion = nn.MSELoss()
             loss = criterion(outputs, labels)
             print(f'Evaluation Loss: {loss.item()}')
+    
+    def make_prediction(self, inputs: list) -> str:
+        inputs = torch.tensor(inputs, dtype=torch.float32)
+        return self.model(inputs)
