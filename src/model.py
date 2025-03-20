@@ -8,14 +8,21 @@ class Model:
         self.model = self.create_model(input_dim)
 
     def create_model(self, input_dim) -> nn.Module:
+        # DEFAULT
         model = nn.Sequential(
-            nn.Linear(input_dim, 64),
+            nn.Linear(input_dim, 16),
             nn.ReLU(),
-            nn.Linear(64, 32),
+            nn.Linear(16, 8),
             nn.ReLU(),
-            nn.Linear(32, 1)
+            nn.Linear(8, 1)
         )
         return model
+
+    def save_model(self, model_name: str) -> None:
+        torch.save(self.model.state_dict(), f"models/{model_name}.pt")
+
+    def load_model(self, model_name: str) -> None:
+        self.model.load_state_dict(torch.load(f"models/{model_name}.pt", weights_only=True))
 
     def train_model(self, data, labels, epochs=50, batch_size=32) -> None:
         data = torch.tensor(data, dtype=torch.float32)
