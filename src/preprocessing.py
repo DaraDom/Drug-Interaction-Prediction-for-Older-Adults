@@ -3,10 +3,14 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 
 class DataPreprocessor:
-    def __init__(self, filepath: str, column_names=[]) -> None:
-        self.data = pd.read_excel(filepath)
-        if len(column_names) > 0:
-            self.data = self.data[column_names]
+    def __init__(self, filepaths: list, join_on_column_names=[]) -> None:
+        if len(filepaths) > 1:
+            for filepath in filepaths:
+                data = pd.read_excel(filepath)
+            self.data = ""
+        else:
+            self.data = pd.read_excel(filepaths[0])
+
         self.label_encoder = LabelEncoder()
 
     def drop_columns(self, column_names: list) -> None:

@@ -4,24 +4,13 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
 class Model:
-    def __init__(self, input_dim) -> None:
-        self.model = self.create_model(input_dim)
-
-    def create_model(self, input_dim) -> nn.Module:
-        # DEFAULT
-        model = nn.Sequential(
-            nn.Linear(input_dim, 16),
-            nn.ReLU(),
-            nn.Linear(16, 8),
-            nn.ReLU(),
-            nn.Linear(8, 1)
-        )
-        return model
+    def __init__(self) -> None:
+        self.model = None
 
     def save_model(self, model_name: str) -> None:
         torch.save(self.model.state_dict(), f"models/{model_name}")
 
-    def load_model(self, model_name: str="default.pth", weights: bool=False) -> nn.Module:
+    def load_model(self, model_name: str="default.pth", weights: bool=False) -> None:
         self.model = torch.load(f"models/{model_name}", weights_only=weights)
 
     def train_model(self, data, labels, epochs=50, batch_size=32) -> None:
