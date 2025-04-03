@@ -1,12 +1,19 @@
+import os
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 
 class DataPreprocessor:
-    def __init__(self, filepath: str, column_names=[]) -> None:
-        self.data = pd.read_excel(filepath)
-        if len(column_names) > 0:
-            self.data = self.data[column_names]
+    def __init__(self, filepaths: list, join_on_column_names=[]) -> None:
+        if len(filepaths) > 1:
+            self.data = pd.DataFrame(columns=join_on_column_names)
+            for file in filepaths:
+                file_path = os.path.join("data", file)
+                data = pd.read_excel(file_path, usecols=join_on_column_names)
+                self.data = pd.concat([self.data, data], ignore_index=True)
+        else:
+            self.data = pd.read_excel(filepaths[0])
+
         self.label_encoder = LabelEncoder()
 
     def drop_columns(self, column_names: list) -> None:
@@ -27,8 +34,8 @@ class DataPreprocessor:
             self.data[column_name] = self.data[column_name].astype(int)
         self.data[column_name] = pd.to_numeric(self.data[column_name], errors='coerce')
     
-    def get_dummies(self, column_names: list) -> None:
-        self.data = pd.get_dummies(self.data, columns=column_names, prefix='', prefix_sep='')
+    def get_dummies(self, column_names: list, prefix: list, sep: str) -> None:
+        self.data = pd.get_dummies(self.data, columns=column_names, prefix=prefix, prefix_sep=sep)
 
     def convert_nulls(self, column_name: str, nulls=["Not Specified"], output="NaN") -> None:
         for null in nulls:
