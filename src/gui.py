@@ -73,7 +73,9 @@ class AnalysisGUI:
         selected_medications = [True if med in [self.medication.selected_box.value] else False for med in self.medications_list]
         criteria = [gender, age, weight] + selected_medications
 
-        self.output.value = self.serious_model.make_prediction(criteria).upper() + self.reaction_model.make_prediction(criteria).capitalize()
+        serious_output = self.serious_model.make_prediction(criteria).upper()
+        reaction_output = self.reaction_model.make_prediction(criteria).capitalize()
+        self.output.value =  f"{serious_output}: {reaction_output}"
 
 
 class MultiSelectWithSearch(widgets.VBox):
