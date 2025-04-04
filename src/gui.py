@@ -70,7 +70,7 @@ class AnalysisGUI:
         gender = self.gender.value
         age = self.age.value
         weight = self.weight.value
-        selected_medications = [True if med in [self.medication.selected_box.value] else False for med in self.medications_list]
+        selected_medications = [True if med in [self.medication.selected_box.options] else False for med in self.medications_list]
         criteria = [gender, age, weight] + selected_medications
 
         serious_prediction = self.serious_model.make_prediction(criteria)
