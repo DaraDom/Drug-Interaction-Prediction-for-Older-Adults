@@ -72,9 +72,18 @@ class AnalysisGUI:
         weight = self.weight.value
         selected_medications = [True if med in [self.medication.selected_box.value] else False for med in self.medications_list]
         criteria = [gender, age, weight] + selected_medications
+        serious_prediction = self.serious_model.make_prediction(criteria)
+        serious_value = int(serious_prediction.item())
+        criteria = [serious_value] + criteria
+        reaction_prediction = self.reaction_model.make_prediction(criteria)
 
-        serious_output = self.serious_model.make_prediction(criteria).upper()
-        reaction_output = self.reaction_model.make_prediction(criteria).capitalize()
+        if serious_value > 0:
+            serious_prediction = "Serious"
+        else:
+            serious_prediction = "Non-Serious"
+        
+        serious_output = str(serious_prediction).upper()
+        reaction_output = str(reaction_prediction).capitalize()
         self.output.value =  f"{serious_output}: {reaction_output}"
 
 

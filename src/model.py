@@ -12,6 +12,7 @@ class Model:
 
     def load_model(self, model_name: str="default.pth", weights: bool=False) -> None:
         self.model = torch.load(f"models/{model_name}", weights_only=weights)
+        
 
     def train_model(self, data, labels, epochs=50, batch_size=32) -> None:
         data = torch.tensor(data, dtype=torch.float32)
@@ -47,31 +48,39 @@ class Model:
     def make_prediction(self, inputs: list) -> str:
         inputs = torch.tensor(inputs, dtype=torch.float32)
         return self.model(inputs)
-    
+
 class NeuralNetwork(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
         super(NeuralNetwork, self).__init__()
         
         # Define multiple layers
-        self.layer_1 = nn.Linear(input_dim, hidden_dim // 32)
+        self.layer_1 = nn.Linear(input_dim, hidden_dim // 16)
         nn.init.kaiming_uniform_(self.layer_1.weight, nonlinearity="relu")
         
-        self.layer_2 = nn.Linear(hidden_dim // 32, hidden_dim // 64)  # Hidden layer (reduce size)
+        self.layer_2 = nn.Linear(hidden_dim // 16, hidden_dim // 32)  # Hidden layer (reduce size)
         nn.init.kaiming_uniform_(self.layer_2.weight, nonlinearity="relu")
         
-        #self.layer_3 = nn.Linear(hidden_dim // 2, hidden_dim // 4)  # Another hidden layer
-        #nn.init.kaiming_uniform_(self.layer_3.weight, nonlinearity="relu")
+        self.layer_3 = nn.Linear(hidden_dim // 32, hidden_dim // 64)  # Another hidden layer
+        nn.init.kaiming_uniform_(self.layer_3.weight, nonlinearity="relu")
+
+        self.dropout = nn.Dropout(p=0.2)
         
         self.output_layer = nn.Linear(hidden_dim // 64, output_dim)  # Final output layer
         
     def forward(self, x):
         # Pass through layers with ReLU activations
         x = torch.nn.functional.relu(self.layer_1(x))
+        x = self.dropout(x)
+
         x = torch.nn.functional.relu(self.layer_2(x))
-        #x = torch.nn.functional.relu(self.layer_3(x))
+        x = self.dropout(x)
+
+        x = torch.nn.functional.relu(self.layer_3(x))
+        x = self.dropout(x)
+
         x = torch.nn.functional.sigmoid(self.output_layer(x))  # Sigmoid for binary output
         return x
-    
+
 class MultiOutputNeuralNetwork(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
         super(MultiOutputNeuralNetwork, self).__init__()
@@ -100,7 +109,7 @@ class MultiOutputNeuralNetwork(nn.Module):
         
         self.output_layer = nn.Linear(hidden_dim // 128 + output_dim, output_dim)  # Final output layer
 
-        self.dropout = nn.Dropout(p=0.3)  # Define dropout
+        self.dropout = nn.Dropout(p=0.2)  # Define dropout
         
     def forward(self, x):
         # Pass through layers with ReLU activations
@@ -119,7 +128,6 @@ class MultiOutputNeuralNetwork(nn.Module):
         x = torch.nn.functional.relu(self.layer_7(x))
         x = self.dropout(x)
 
-        #x = torch.nn.functional.sigmoid(self.output_layer(x))  # Sigmoid for binary output
-        #x = torch.sigmoid(self.output_layer(x))
         x = self.output_layer(x)
         return x
+
