@@ -54,7 +54,7 @@ class AnalysisGUI:
             layout=widgets.Layout(padding='10px', overflow="hidden")
         )
 
-        self.output = widgets.Label(
+        self.output = widgets.HTML(
             layout=widgets.Layout(padding='10px', border="1px solid", height="120px", width="300px", overflow="auto")
         )
 
@@ -76,14 +76,12 @@ class AnalysisGUI:
         import joblib
 
         scaler = joblib.load("Models/scaler.pkl")
-        serious_criteria = scaler.transform(criteria.reshape(1, -1)) #scaler.transform(criteria)
+        serious_criteria = scaler.transform(criteria.reshape(1, -1))
 
         serious_prediction = self.serious_model.make_prediction(serious_criteria)
         serious_value = int(serious_prediction.item())
 
-        #reaction_criteria =  serious_criteria + [serious_value]
         reaction_criteria = np.insert(serious_criteria, 0, serious_value)
-        #print(len(reaction_criteria))
         reaction_prediction = self.reaction_model.make_prediction(reaction_criteria)
 
         if serious_value > 0:
@@ -94,7 +92,7 @@ class AnalysisGUI:
         serious_output = str(serious_prediction).upper()
         
         sigmoided_reaction_predictions = torch.sigmoid(reaction_prediction).numpy()
-        serious_predicted_outcomes = (sigmoided_reaction_predictions >= 0.01).astype(float) #thresholds_array).astype(float)
+        serious_predicted_outcomes = (sigmoided_reaction_predictions >= 0.01).astype(float)
 
         yes_labels_with_probabilities = []
 
@@ -105,8 +103,8 @@ class AnalysisGUI:
         ):
             if outcome == 1:
                 yes_labels_with_probabilities.append((column_name, probability))
-
-        self.output.value =  f"{serious_output}:{[f'\n{reaction}: {probability}' for reaction, probability in yes_labels_with_probabilities]}"
+        
+        self.output.value =  f"{serious_output}:<br>{'<br>'.join([f'{reaction[9::]}: {probability}' for reaction, probability in yes_labels_with_probabilities])}"
 
 class MultiSelectWithSearch(widgets.VBox):
     def __init__(self, options, title):
