@@ -47,7 +47,9 @@ class Model:
     
     def make_prediction(self, inputs: list) -> str:
         inputs = torch.tensor(inputs, dtype=torch.float32)
-        return self.model(inputs)
+        self.model.eval()
+        with torch.no_grad():
+            return self.model(inputs)
 
 class NeuralNetwork(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):

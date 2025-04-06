@@ -1,6 +1,8 @@
 import torch
+import numpy as np
 import ipywidgets as widgets
 from IPython.display import display
+from sklearn.preprocessing import StandardScaler
 
 from .model import Model
 
@@ -20,7 +22,7 @@ class AnalysisGUI:
         self.age = widgets.IntSlider(
             min=age_range[0], 
             max=age_range[1], 
-            default_value=age_range[0], 
+            value=83, 
             description="Age (YRs): ",
             layout=widgets.Layout(margin="10px 0")
         )
@@ -28,7 +30,7 @@ class AnalysisGUI:
         self.weight = widgets.FloatSlider(
             min=weight_range[0], 
             max=weight_range[1], 
-            default_value=weight_range[0], 
+            value=65, 
             description="Weight (KGs): ",
             layout=widgets.Layout(margin="10px 0") 
         )
@@ -47,8 +49,8 @@ class AnalysisGUI:
         self.body_image = widgets.Image(
             value=open("assets/imgs/body.png", "rb").read(),
             format='png',
-            width=400,
-            height=500,
+            width=500,
+            height=650,
             layout=widgets.Layout(padding='10px', overflow="hidden")
         )
 
@@ -60,39 +62,47 @@ class AnalysisGUI:
         left_box = widgets.VBox([self.gender, self.age, self.weight, self.medication, bottom_left_box], layout=widgets.Layout(width="auto"))
         right_box = widgets.VBox([self.body_image])
         
-        # Main layout
         main_layout = widgets.VBox([widgets.HBox([left_box, right_box])], layout=widgets.Layout(height="550px", align_self='center'))
 
-        # Display the layout
         display(main_layout)
     
     def on_predict_button_click(self, b) -> None:
         gender = self.gender.value
-        age = self.age.value
         weight = self.weight.value
-        selected_medications = [True if med in [self.medication.selected_box.options] else False for med in self.medications_list]
-        criteria = [gender, age, weight] + selected_medications
+        age = self.age.value
+        selected_medications = [True if med in self.medication.selected_box.options else False for med in self.medications_list ]
+        criteria = np.array([gender, age, weight] + selected_medications)
 
-        serious_prediction = self.serious_model.make_prediction(criteria)
+        scaler = StandardScaler()
+        serious_criteria = scaler.transform(criteria)
+
+        serious_prediction = self.serious_model.make_prediction(serious_criteria)
         serious_value = int(serious_prediction.item())
-        criteria = [serious_value] + criteria
-        reaction_prediction = self.reaction_model.make_prediction(criteria)
+
+        reaction_criteria = serious_criteria + [serious_value]
+        reaction_prediction = self.reaction_model.make_prediction(reaction_criteria)
 
         if serious_value > 0:
             serious_prediction = "Serious"
         else:
             serious_prediction = "Non-Serious"
+
         serious_output = str(serious_prediction).upper()
+        
+        sigmoided_reaction_predictions = torch.sigmoid(reaction_prediction).numpy()
+        serious_predicted_outcomes = (sigmoided_reaction_predictions >= thresholds_array).astype(float)
 
-        sigmoid_of_reaction_prediction = torch.sigmoid(reaction_prediction)
-        tensor_of_thresholds = torch.tensor(thresholds_array)
-        passed_thresholds = sigmoid_of_reaction_prediction > tensor_of_thresholds
-        reaction_output = "\n".join([reaction_names[i] for i in range(len(passed_thresholds)) if passed_thresholds[i]])
-        if not reaction_output:
-            reaction_output = "None."
+        yes_labels_with_probabilities = []
 
-        self.output.value =  f"{serious_output}: \n{reaction_output}"
+        for outcome, probability, column_name in zip(
+            serious_predicted_outcomes.flatten(),
+            torch.sigmoid(serious_prediction).numpy().flatten(),
+            reaction_names
+        ):
+            if outcome == 1:
+                yes_labels_with_probabilities.append((column_name, probability))
 
+        self.output.value =  f"{serious_output}:{[f'\n{reaction}: {probability}' for reaction, probability in yes_labels_with_probabilities]}"
 
 class MultiSelectWithSearch(widgets.VBox):
     def __init__(self, options, title):
