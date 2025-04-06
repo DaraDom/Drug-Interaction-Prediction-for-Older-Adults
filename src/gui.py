@@ -70,16 +70,20 @@ class AnalysisGUI:
         gender = self.gender.value
         weight = self.weight.value
         age = self.age.value
-        selected_medications = [True if med in self.medication.selected_box.options else False for med in self.medications_list ]
+        selected_medications = [1 if med in self.medication.selected_box.options else 0 for med in self.medications_list ]
         criteria = np.array([gender, age, weight] + selected_medications)
 
-        scaler = StandardScaler()
-        serious_criteria = scaler.transform(criteria)
+        import joblib
+
+        scaler = joblib.load("Models/scaler.pkl")
+        serious_criteria = scaler.transform(criteria.reshape(1, -1)) #scaler.transform(criteria)
 
         serious_prediction = self.serious_model.make_prediction(serious_criteria)
         serious_value = int(serious_prediction.item())
 
-        reaction_criteria = serious_criteria + [serious_value]
+        #reaction_criteria =  serious_criteria + [serious_value]
+        reaction_criteria = np.insert(serious_criteria, 0, serious_value)
+        #print(len(reaction_criteria))
         reaction_prediction = self.reaction_model.make_prediction(reaction_criteria)
 
         if serious_value > 0:
@@ -90,13 +94,13 @@ class AnalysisGUI:
         serious_output = str(serious_prediction).upper()
         
         sigmoided_reaction_predictions = torch.sigmoid(reaction_prediction).numpy()
-        serious_predicted_outcomes = (sigmoided_reaction_predictions >= thresholds_array).astype(float)
+        serious_predicted_outcomes = (sigmoided_reaction_predictions >= 0.01).astype(float) #thresholds_array).astype(float)
 
         yes_labels_with_probabilities = []
 
         for outcome, probability, column_name in zip(
             serious_predicted_outcomes.flatten(),
-            torch.sigmoid(serious_prediction).numpy().flatten(),
+            torch.sigmoid(reaction_prediction).numpy().flatten(),
             reaction_names
         ):
             if outcome == 1:
